@@ -577,6 +577,14 @@ class SpotBugsMojo extends AbstractMavenReport implements SpotBugsPluginsTrait {
     @Parameter(property = "spotbugs.systemPropertyVariables")
     Map<String, String> systemPropertyVariables
 
+    /**
+     * System properties to set in the VM (or the forked VM if fork is enabled).
+     *
+     * @since 4.8.1
+     */
+    @Parameter(property = "spotbugs.logBugCountToFiles", defaultValue = "false")
+    boolean logBugCountToFile
+
     int bugCount
 
     int errorCount
@@ -889,6 +897,10 @@ class SpotBugsMojo extends AbstractMavenReport implements SpotBugsPluginsTrait {
 
         args << "-xml:withMessages=" + xmlTempFile.getAbsolutePath()
 
+        if (logBugCountToFile) {
+            forceFileCreation(bugCountFile)
+        }
+
         if (sarifOutput) {
             args << "-sarif=" + sarifTempFile.getAbsolutePath()
         }
@@ -1105,6 +1117,11 @@ class SpotBugsMojo extends AbstractMavenReport implements SpotBugsPluginsTrait {
 
         File xmlTempFile = new File("${project.build.directory}/spotbugsTemp.xml")
         forceFileCreation(xmlTempFile)
+
+        File bugCountFile = new File("${project.build.directory}/spotbugs-bugCount")
+        if (logBugCountToFile) {
+            forceFileCreation(bugCountFile)
+        }
 
         File sarifTempFile = new File("${project.build.directory}/spotbugsTempSarif.json")
         if (sarifOutput) {

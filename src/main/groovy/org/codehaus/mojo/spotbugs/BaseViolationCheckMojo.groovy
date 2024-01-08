@@ -83,6 +83,22 @@ abstract class BaseViolationCheckMojo extends AbstractMojo {
     String spotbugsXmlOutputFilename
 
     /**
+     * Specifies the directory where the Spotbugs native xml output will be generated.
+     *
+     * @since 1.2.0
+     */
+    @Parameter(defaultValue = '${project.build.directory}', required = true)
+    File spotbugsBugCountOutputDirectory
+
+    /**
+     * Set the name of the output XML file produced
+     *
+     * @since 3.1.12.2
+     */
+    @Parameter(property = "spotbugs.outputBugCountFilename", defaultValue = "spotbugs-bugCount")
+    String spotbugsBugCountOutputFilename
+
+    /**
      * Doxia Site Renderer.
      */
     @Component(role = Renderer.class)
@@ -449,6 +465,7 @@ abstract class BaseViolationCheckMojo extends AbstractMojo {
         }
 
         File outputFile = new File("${spotbugsXmlOutputDirectory}/${spotbugsXmlOutputFilename}")
+        File bugCountFile = new File("${spotbugsBugCountOutputDirectory}/${spotbugsBugCountOutputFilename}")
 
         if (outputFile.exists()) {
 
@@ -457,6 +474,8 @@ abstract class BaseViolationCheckMojo extends AbstractMojo {
             def bugs = xml.BugInstance
             int bugCount = bugs.size()
             log.info("BugInstance size is ${bugCount}")
+
+            writeBugCountToOutputFile(bugCount, bugCountFile)
 
             int errorCount = xml.Error.size()
             log.info("Error size is ${errorCount}")
@@ -499,6 +518,12 @@ abstract class BaseViolationCheckMojo extends AbstractMojo {
             if ((bugCountAboveThreshold || errorCount) && failOnError) {
                 throw new MojoExecutionException("failed with ${bugCountAboveThreshold} bugs and ${errorCount} errors ")
             }
+        }
+    }
+
+    private void writeBugCountToOutputFile(bugCount, bugCountFile) {
+        if (bugCountFile.exists()) {
+            bugCountFile.write("${bugCount}")
         }
     }
 
