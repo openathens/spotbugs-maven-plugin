@@ -897,10 +897,6 @@ class SpotBugsMojo extends AbstractMavenReport implements SpotBugsPluginsTrait {
 
         args << "-xml:withMessages=" + xmlTempFile.getAbsolutePath()
 
-        if (logBugCountToFile) {
-            forceFileCreation(bugCountFile)
-        }
-
         if (sarifOutput) {
             args << "-sarif=" + sarifTempFile.getAbsolutePath()
         }
