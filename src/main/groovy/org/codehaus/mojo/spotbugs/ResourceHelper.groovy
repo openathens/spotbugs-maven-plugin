@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2023 the original author or authors.
+ * Copyright 2005-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,13 @@ import org.codehaus.plexus.resource.ResourceManager
 
 final class ResourceHelper {
 
+    /** The log. */
     Log log
+
+    /** The output directory. */
     File outputDirectory
+
+    /** The resource manager. */
     ResourceManager resourceManager
 
     ResourceHelper(Log log, File outputDirectory, ResourceManager resourceManager) {
@@ -71,38 +76,33 @@ final class ResourceHelper {
         location = location?.replaceAll("[\\?\\:\\&\\=\\%]", "_")
         artifact = artifact?.replaceAll("[\\?\\:\\&\\=\\%]", "_")
 
-        log.debug("resource is " + resource)
-        log.debug("location is " + location)
-        log.debug("artifact is " + artifact)
+        log.debug('resource is ' + resource)
+        log.debug('location is ' + location)
+        log.debug('artifact is ' + artifact)
 
         File resourceFile = getResourceAsFile(resource, artifact)
 
-        log.debug("location of resourceFile file is " + resourceFile.absolutePath)
+        log.debug('location of resourceFile file is ' + resourceFile.absolutePath)
 
         return resourceFile
-
     }
 
     private File getResourceAsFile(String name, String outputPath) {
         // Optimization for File to File fetches
         File f = FileResourceLoader.getResourceAsFile(name, outputPath, outputDirectory)
-
         if (f != null) {
             return f
         }
-
         // End optimization
 
         File outputResourceFile
 
         if (outputPath == null) {
-            outputResourceFile = Files.createTempFile("plexus-resources", "tmp")
+            outputResourceFile = Files.createTempFile('plexus-resources', 'tmp')
+        } else if (outputDirectory != null) {
+            outputResourceFile = new File(outputDirectory, outputPath)
         } else {
-            if (outputDirectory != null) {
-                outputResourceFile = new File(outputDirectory, outputPath)
-            } else {
-                outputResourceFile = new File(outputPath)
-            }
+            outputResourceFile = new File(outputPath)
         }
 
         try (InputStream is = new BufferedInputStream(resourceManager.getResourceAsInputStream(name))) {
@@ -114,12 +114,10 @@ final class ResourceHelper {
             FileOutputStream os = new FileOutputStream(outputResourceFile)
 
             os << is
-
         } catch (IOException e) {
-            throw new FileResourceCreationException("Cannot create file-based resource.", e)
+            throw new FileResourceCreationException('Cannot create file-based resource.', e)
         }
 
         return outputResourceFile
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2023 the original author or authors.
+ * Copyright 2005-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,18 @@ package org.codehaus.mojo.spotbugs
 
 import groovy.ant.AntBuilder
 
-import org.apache.maven.artifact.repository.ArtifactRepository
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
+
+import javax.inject.Inject
 
 import org.apache.maven.execution.MavenSession
-
 import org.apache.maven.plugin.AbstractMojo
-
-import org.apache.maven.plugins.annotations.Component
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.plugins.annotations.ResolutionScope
-
-import org.apache.maven.project.MavenProject
-
 import org.apache.maven.repository.RepositorySystem
-
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver
-
 import org.codehaus.plexus.resource.ResourceManager
 
 /**
@@ -44,44 +39,30 @@ import org.codehaus.plexus.resource.ResourceManager
  *
  * @description Launch the Spotbugs GUI using the parameters in the POM fle.
  */
-@Mojo(name = "gui", requiresDependencyResolution = ResolutionScope.TEST, requiresProject = true)
+@Mojo(name = 'gui', requiresDependencyResolution = ResolutionScope.TEST, requiresProject = true)
 class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
 
-    /**
-     * locale to use for Resource bundle.
-     */
+    /** Locale to use for Resource bundle. */
     static Locale locale = Locale.ENGLISH
 
-    /**
-     * Directory containing the class files for Spotbugs to analyze.
-     */
+    /** Directory containing the class files for Spotbugs to analyze. */
     @Parameter(defaultValue = '${project.build.outputDirectory}', required = true)
     File classFilesDirectory
 
-    /**
-     * Turn on Spotbugs debugging.
-     *
-     */
-    @Parameter(defaultValue = "false", property="spotbugs.debug")
+    /** Turn on Spotbugs debugging. */
+    @Parameter(defaultValue = 'false', property = 'spotbugs.debug')
     boolean debug
 
-    /**
-     * List of artifacts this plugin depends on. Used for resolving the Spotbugs core plugin.
-     */
-    @Parameter(property="plugin.artifacts", required = true, readonly = true)
+    /** List of artifacts this plugin depends on. Used for resolving the Spotbugs core plugin. */
+    @Parameter(property = 'plugin.artifacts', readonly = true, required = true)
     List pluginArtifacts
 
-    /**
-     * Effort of the bug finders. Valid values are Min, Default and Max.
-     *
-     */
-    @Parameter(defaultValue = "Default", property="spotbugs.effort")
+    /** Effort of the bug finders. Valid values are Min, Default and Max. */
+    @Parameter(defaultValue = 'Default', property = 'spotbugs.effort')
     String effort
 
-    /**
-     * The plugin list to include in the report. This is a SpotbugsInfo.COMMA-delimited list.
-     */
-    @Parameter(property="spotbugs.pluginList")
+    /** The plugin list to include in the report. This is a SpotbugsInfo.COMMA-delimited list. */
+    @Parameter(property = 'spotbugs.pluginList')
     String pluginList
 
     /**
@@ -94,57 +75,19 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
     @Parameter
     PluginArtifact[] plugins
 
-    /**
-     * Artifact resolver, needed to download the coreplugin jar.
-     */
-    @Component(role = ArtifactResolver.class)
+    /** Artifact resolver, needed to download the coreplugin jar. */
+    @Inject
     ArtifactResolver artifactResolver
 
-    /**
-     * Used to look up Artifacts in the remote repository.
-     *
-     */
-    @Component(role = RepositorySystem.class)
+    /** Used to look up Artifacts in the remote repository. */
+    @Inject
     RepositorySystem factory
 
-    /**
-     * List of Remote Repositories used by the resolver.
-     *
-     */
-    @Parameter(property = "project.remoteArtifactRepositories", required = true, readonly = true)
-    List remoteRepositories
-
-    /**
-     * The local repository, needed to download the coreplugin jar.
-     *
-     */
-    @Parameter(property = "localRepository", required = true, readonly = true)
-    ArtifactRepository localRepository
-
-    /**
-     * Maven Session.
-     */
-    @Parameter (defaultValue = '${session}', required = true, readonly = true)
+    /** Maven Session. */
+    @Parameter (defaultValue = '${session}', readonly = true, required = true)
     MavenSession session
 
-    /**
-     * Maven Project.
-     *
-     */
-    @Parameter(property="project", required = true, readonly = true)
-    MavenProject project
-
-    /**
-     * Resource bundle for a specific locale.
-     *
-     */
-    @Parameter(readonly = true)
-    ResourceBundle bundle
-
-    /**
-     * Specifies the directory where the Spotbugs native xml output will be generated.
-     *
-     */
+    /** Specifies the directory where the Spotbugs native xml output will be generated. */
     @Parameter(defaultValue = '${project.build.directory}', required = true)
     File spotbugsXmlOutputDirectory
 
@@ -153,7 +96,7 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
      *
      * @since 3.1.12.2
      */
-    @Parameter(property = "spotbugs.outputXmlFilename", defaultValue = "spotbugsXml.xml")
+    @Parameter(defaultValue = 'spotbugsXml.xml', property = 'spotbugs.outputXmlFilename')
     String spotbugsXmlOutputFilename
 
     /**
@@ -163,7 +106,7 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
      *
      * @since 2.2
      */
-    @Parameter(property="encoding", defaultValue = '${project.build.sourceEncoding}')
+    @Parameter(defaultValue = '${project.build.sourceEncoding}', property = 'encoding')
     String encoding
 
     /**
@@ -171,7 +114,7 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
      *
      * @since 2.2
      */
-    @Parameter(property="spotbugs.maxHeap", defaultValue = "512")
+    @Parameter(defaultValue = '512', property = 'spotbugs.maxHeap')
     int maxHeap
 
     /**
@@ -179,7 +122,7 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
      *
      * @since 2.0
      */
-    @Component(role = ResourceManager.class)
+    @Inject
     ResourceManager resourceManager
 
     @Override
@@ -187,29 +130,29 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
 
         AntBuilder ant = new AntBuilder()
 
-        List<String> auxClasspathElements = project.compileClasspathElements
+        List<String> auxClasspathElements = session.getCurrentProject().compileClasspathElements
 
         if (debug) {
-            log.debug("  Plugin Artifacts to be added ->" + pluginArtifacts.toString())
+            log.debug('  Plugin Artifacts to be added -> ' + pluginArtifacts.toString())
         }
 
         ant.project.setProperty('basedir', spotbugsXmlOutputDirectory.getAbsolutePath())
-        ant.project.setProperty('verbose', "true")
+        ant.project.setProperty('verbose', 'true')
 
-        ant.java(classname: "edu.umd.cs.findbugs.LaunchAppropriateUI", fork: "true", failonerror: "true", clonevm: "true", maxmemory: "${maxHeap}m") {
+        ant.java(classname: 'edu.umd.cs.findbugs.LaunchAppropriateUI', fork: 'true', failonerror: 'true', clonevm: 'true', maxmemory: "${maxHeap}m") {
 
-            String effectiveEncoding = System.getProperty("file.encoding", "UTF-8")
+            Charset effectiveEncoding = Charset.defaultCharset() ?: StandardCharsets.UTF_8
 
             if (encoding) {
-                effectiveEncoding = encoding
+                effectiveEncoding = Charset.forName(encoding)
             }
 
-            log.info("File Encoding is " + effectiveEncoding)
+            log.info('File Encoding is ' + effectiveEncoding.name())
 
-            sysproperty(key: "file.encoding" , value: effectiveEncoding)
+            sysproperty(key: 'file.encoding' , value: effectiveEncoding.name())
 
             // spotbugs assumes that multiple arguments (because of options) means text mode, so need to request gui explicitly
-            jvmarg(value: "-Dfindbugs.launchUI=gui2")
+            jvmarg(value: '-Dfindbugs.launchUI=gui2')
 
             // options must be added before the spotbugsXml path
             List<String> spotbugsArgs = new ArrayList<>()
@@ -217,7 +160,7 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
             spotbugsArgs << getEffortParameter()
 
             if (pluginList || plugins) {
-                spotbugsArgs << "-pluginList"
+                spotbugsArgs << '-pluginList'
                 spotbugsArgs << getSpotbugsPlugins()
             }
             spotbugsArgs.each { spotbugsArg ->
@@ -225,11 +168,11 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
                 arg(value: spotbugsArg)
             }
 
-            String spotbugsXmlName = spotbugsXmlOutputDirectory.toString() + "/" + spotbugsXmlOutputFilename
+            String spotbugsXmlName = spotbugsXmlOutputDirectory.toString() + SpotBugsInfo.FORWARD_SLASH + spotbugsXmlOutputFilename
             File spotbugsXml = new File(spotbugsXmlName)
 
             if (spotbugsXml.exists()) {
-                log.debug("  Found an SpotBugs XML at ->" + spotbugsXml.toString())
+                log.debug('  Found an SpotBugs XML at -> ' + spotbugsXml.toString())
                 arg(value: spotbugsXml)
             }
 
@@ -237,7 +180,7 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
 
                 pluginArtifacts.each() { pluginArtifact ->
                     if (debug) {
-                        log.debug("  Trying to Add to pluginArtifact ->" + pluginArtifact.file.toString())
+                        log.debug('  Trying to Add to pluginArtifact -> ' + pluginArtifact.file.toString())
                     }
 
                     pathelement(location: pluginArtifact.file)
@@ -245,5 +188,4 @@ class SpotBugsGui extends AbstractMojo implements SpotBugsPluginsTrait {
             }
         }
     }
-
 }

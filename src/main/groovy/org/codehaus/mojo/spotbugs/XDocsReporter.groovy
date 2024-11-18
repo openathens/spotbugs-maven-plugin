@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2023 the original author or authors.
+ * Copyright 2005-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import edu.umd.cs.findbugs.Version
 import groovy.xml.slurpersupport.GPathResult
 import groovy.xml.StreamingMarkupBuilder
 
+import java.nio.charset.StandardCharsets
+
 import org.apache.maven.plugin.logging.Log
 
 /**
@@ -27,59 +29,37 @@ import org.apache.maven.plugin.logging.Log
  */
 class XDocsReporter {
 
-    /**
-     * The key to get the value if the line number is not available.
-     */
-    static final String NOLINE_KEY = "report.spotbugs.noline"
+    /** The key to get the value if the line number is not available. */
+    static final String NOLINE_KEY = 'report.spotbugs.noline'
 
-    /**
-     * The bundle to get the messages from.
-     */
+    /** The bundle to get the messages from. */
     ResourceBundle bundle
 
-    /**
-     * The logger to write logs to.
-     */
+    /** The logger to write logs to. */
     Log log
 
-    /**
-     * The threshold of bugs severity.
-     */
+    /** The threshold of bugs severity. */
     String threshold
 
-    /**
-     * The used effort for searching bugs.
-     */
+    /** The used effort for searching bugs. */
     String effort
 
-    /**
-     * The output Writer stream.
-     */
+    /** The output Writer stream. */
     Writer outputWriter
 
-    /**
-     * Spotbugs Results.
-     */
+    /** Spotbugs Results. */
     GPathResult spotbugsResults
 
-    /**
-     * Bug Classes.
-     */
+    /** Bug Classes. */
     List bugClasses
 
-    /**
-     * The directories containing the sources to be compiled.
-     */
+    /** The directories containing the sources to be compiled. */
     List compileSourceRoots
 
-    /**
-     * The directories containing the test sources to be compiled.
-     */
+    /** The directories containing the test sources to be compiled. */
     List testSourceRoots
 
-    /**
-     * The output encoding.
-     */
+    /** The output encoding. */
     String outputEncoding
 
     /**
@@ -120,23 +100,23 @@ class XDocsReporter {
         String thresholdName
 
         switch (thresholdValue) {
-            case "1":
-                thresholdName = "High"
+            case '1':
+                thresholdName = 'High'
                 break
-            case "2":
-                thresholdName = "Normal"
+            case '2':
+                thresholdName = 'Normal'
                 break
-            case "3":
-                thresholdName = "Low"
+            case '3':
+                thresholdName = 'Low'
                 break
-            case "4":
-                thresholdName = "Exp"
+            case '4':
+                thresholdName = 'Exp'
                 break
-            case "5":
-                thresholdName = "Ignore"
+            case '5':
+                thresholdName = 'Ignore'
                 break
             default:
-                thresholdName = "Invalid Priority"
+                thresholdName = 'Invalid Priority'
         }
 
         return thresholdName
@@ -152,9 +132,8 @@ class XDocsReporter {
     }
 
     public void generateReport() {
-
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
-        xmlBuilder.encoding = "UTF-8"
+        xmlBuilder.encoding = StandardCharsets.UTF_8.name()
 
         def xdoc = {
             mkp.xmlDeclaration()
@@ -169,7 +148,7 @@ class XDocsReporter {
                     String classStatsValue = classStats.'@class'.text()
                     String classStatsBugCount = classStats.'@bugs'.text()
 
-                    log.debug("classStats...")
+                    log.debug('classStats...')
                     log.debug("classStatsValue is ${classStatsValue}")
                     log.debug("classStatsBugCount is ${classStatsBugCount}")
 
@@ -184,7 +163,7 @@ class XDocsReporter {
                         spotbugsResults.BugInstance.each() { bugInstance ->
 
                             if (bugInstance.Class.find{ it.@primary == "true" }.@classname.text() != bugClass) {
-                               return
+                                return
                             }
 
                             String type = bugInstance.@type.text()
@@ -236,5 +215,4 @@ class XDocsReporter {
         outputWriter << xmlBuilder.bind(xdoc)
         outputWriter.close()
     }
-
 }

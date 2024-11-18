@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2023 the original author or authors.
+ * Copyright 2005-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.codehaus.mojo.spotbugs
 
 import org.apache.maven.execution.MavenSession
 import org.apache.maven.model.Resource
-import org.apache.maven.project.MavenProject
 
 import java.nio.file.Paths
 
@@ -27,9 +26,7 @@ import java.nio.file.Paths
  */
 class SourceFileIndexer {
 
-    /**
-     * List of source files found in the current Maven project
-     */
+    /** List of source files found in the current Maven project. */
     private List<String> allSourceFiles
 
     /**
@@ -38,38 +35,33 @@ class SourceFileIndexer {
      * @param project Reference to the Maven project to get the list of source directories
      * @param session Reference to the Maven session used to get the location of the root directory
      */
-    protected void buildListSourceFiles(MavenProject project, MavenSession session) {
+    protected void buildListSourceFiles(MavenSession session) {
 
-        //String basePath = project.basedir.absolutePath
         String basePath = normalizePath(session.getExecutionRootDirectory())
 
         List<File> allSourceFiles = new ArrayList<>()
 
         // Resource
-        for (Resource r in project.getResources()) {
+        for (Resource r in session.getCurrentProject().getResources()) {
             scanDirectory(new File(r.directory), allSourceFiles, basePath)
         }
 
-        for (Resource r in project.getTestResources()) {
+        for (Resource r in session.getCurrentProject().getTestResources()) {
             scanDirectory(new File(r.directory), allSourceFiles, basePath)
         }
 
         // Source files
-        for (String sourceRoot in project.getCompileSourceRoots()) {
+        for (String sourceRoot in session.getCurrentProject().getCompileSourceRoots()) {
             scanDirectory(new File(sourceRoot), allSourceFiles, basePath)
         }
-        for (String sourceRoot in project.getTestCompileSourceRoots()) {
-            scanDirectory(new File(sourceRoot), allSourceFiles, basePath)
-        }
-
-        for (String sourceRoot in project.getScriptSourceRoots()) {
+        for (String sourceRoot in session.getCurrentProject().getTestCompileSourceRoots()) {
             scanDirectory(new File(sourceRoot), allSourceFiles, basePath)
         }
 
         //While not perfect, add the following paths will add basic support for Kotlin and Groovy
-        scanDirectory(new File(project.getBasedir(),"src/main/webapp"), allSourceFiles, basePath)
-        scanDirectory(new File(project.getBasedir(),"src/main/groovy"), allSourceFiles, basePath)
-        scanDirectory(new File(project.getBasedir(),"src/main/kotlin"), allSourceFiles, basePath)
+        scanDirectory(new File(session.getCurrentProject().getBasedir(), 'src/main/groovy'), allSourceFiles, basePath)
+        scanDirectory(new File(session.getCurrentProject().getBasedir(), 'src/main/kotlin'), allSourceFiles, basePath)
+        scanDirectory(new File(session.getCurrentProject().getBasedir(), 'src/main/webapp'), allSourceFiles, basePath)
 
         this.allSourceFiles = allSourceFiles
     }
@@ -82,7 +74,7 @@ class SourceFileIndexer {
      * @param files ArrayList where files found will be stored
      * @param baseDirectory This part will be truncated from path stored
      */
-    private void scanDirectory(File directory,List<String> files,String baseDirectory) {
+    private void scanDirectory(File directory, List<String> files, String baseDirectory) {
 
         if (!directory.exists()) {
             return
@@ -108,11 +100,11 @@ class SourceFileIndexer {
                 }
             }
         }
-
     }
 
     /**
      * Normalize path to use forward slash.
+     * <p>
      * This will facilitate searches.
      *
      * @param path Path to clean up
@@ -131,19 +123,16 @@ class SourceFileIndexer {
     protected String searchActualFilesLocation(String filename) {
 
         if (allSourceFiles == null) {
-            throw new RuntimeException("Source files cache must be built prior to searches.")
+            throw new RuntimeException('Source files cache must be built prior to searches.')
         }
 
         for (String fileFound in allSourceFiles) {
-
             if (fileFound.endsWith(filename)) {
                 return fileFound
             }
-
         }
 
         // Not found
         return null
     }
-
 }
